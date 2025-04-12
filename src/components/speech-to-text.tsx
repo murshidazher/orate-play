@@ -1,17 +1,22 @@
 'use client';
 
 import { Spinner } from '@/components/ui/kibo-ui/spinner';
+import { toast } from '@/components/ui/sonner';
+import { cn, formatTime } from '@/lib/utils';
 import {
+  IconBrandTelegram,
   IconCheck,
   IconMicrophoneFilled,
   IconPlayerPlayFilled,
   IconPlayerStopFilled,
-  IconSend,
+  IconSquareRoundedCheck,
+  IconSquareRoundedX,
   IconX,
 } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import CountUp from 'react-countup';
+import ReactCountDownWrapper from './ui/react-count-down-wrapper';
+import { Skeleton } from './ui/skeleton';
 
 // Add type declaration for webkitAudioContext
 declare global {
@@ -224,18 +229,6 @@ export default function SpeechToText() {
     };
   }, [cleanup, audioUrl]);
 
-  const formatTime = (seconds: number | null) => {
-    if (
-      seconds === null ||
-      Number.isNaN(seconds) ||
-      !Number.isFinite(seconds)
-    ) {
-      return '00s';
-    }
-    const formattedSeconds = Math.max(0, Math.floor(seconds));
-    return `${String(formattedSeconds).padStart(2, '0')}s`;
-  };
-
   const startRecording = useCallback(async () => {
     try {
       cleanup();
@@ -248,6 +241,9 @@ export default function SpeechToText() {
       });
 
       setAudioStream(stream);
+      toast.success('Recording started', {
+        icon: <IconSquareRoundedCheck className="text-green-700" size={18} />,
+      });
 
       const recorder = new MediaRecorder(stream, {
         mimeType: 'audio/webm; codecs=opus',
@@ -329,9 +325,11 @@ export default function SpeechToText() {
       setIsRecording(true);
       setIsExpanded(true);
     } catch (_err) {
-      setError(
-        'Failed to access microphone. Please ensure you have granted microphone permissions.'
-      );
+      const errorMessage = 'Failed to access microphone';
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        icon: <IconSquareRoundedX className="text-red-600" size={18} />,
+      });
     }
   }, [cleanup, audioUrl]);
 
@@ -344,6 +342,9 @@ export default function SpeechToText() {
       setIsRecording(false);
       setAudioStream(null);
       setRecordingProgress(0);
+      toast.success('Recording saved', {
+        icon: <IconSquareRoundedCheck className="text-emerald-700" size={18} />,
+      });
     }
   }, [isRecording]);
 
@@ -375,8 +376,15 @@ export default function SpeechToText() {
       }
 
       setTranscribedText(data.text);
+      toast.success('Transcription complete', {
+        icon: <IconSquareRoundedCheck className="text-emerald-700" size={18} />,
+      });
     } catch (_err) {
-      setError('Failed to transcribe audio. Please try again.');
+      const errorMessage = 'Failed to transcribe';
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        icon: <IconSquareRoundedX className="text-red-700" size={18} />,
+      });
     } finally {
       setIsTranscribing(false);
     }
@@ -422,6 +430,9 @@ export default function SpeechToText() {
     cleanup();
     if (isRecording) {
       stopRecording();
+      toast('Recording dismissed', {
+        icon: <IconSquareRoundedX className="text-gray-500" size={18} />,
+      });
     }
     setIsExpanded(false);
     if (audioUrl) {
@@ -439,7 +450,7 @@ export default function SpeechToText() {
     if (isRecording) {
       return <IconCheck size={16} className="text-gray-900" />;
     }
-    return <IconSend size={16} className="text-gray-900" />;
+    return <IconBrandTelegram size={16} className="text-gray-900" />;
   };
 
   // Add recording time limit logic
@@ -501,22 +512,46 @@ export default function SpeechToText() {
                         background: 'transparent',
                       }}
                     >
-                      <div
-                        className="absolute inset-0"
-                        style={{
-                          WebkitMask: `conic-gradient(from 90deg at 50% 50%, black ${recordingProgress}%, transparent ${recordingProgress}%)`,
-                          mask: `conic-gradient(from 90deg at 50% 50%, black ${recordingProgress}%, transparent ${recordingProgress}%)`,
-                          border: '2.5px solid #F43F5E',
-                          borderRadius: '18px',
-                          opacity: 0.5,
-                        }}
-                      />
+                      <svg
+                        className="absolute inset-0 h-full w-full"
+                        aria-label="Recording progress indicator"
+                        role="img"
+                      >
+                        <title>Recording progress indicator</title>
+                        <path
+                          d="M57.5 18 C57.5 26 52 33.5 42.5 33.5 H17.5 C8 33.5 2.5 26 2.5 18 C2.5 10 8 2.5 17.5 2.5 H42.5 C52 2.5 57.5 10 57.5 18"
+                          fill="none"
+                          stroke="#F43F5E"
+                          strokeWidth="2.5"
+                          strokeDasharray={`${(recordingProgress / 100) * 140} 140`}
+                          strokeLinecap="round"
+                          style={{
+                            opacity: 1,
+                            transformOrigin: 'center',
+                            transform: 'rotate(0deg)',
+                            strokeDashoffset: -7,
+                          }}
+                        />
+                      </svg>
                     </div>
                   </div>
                 )}
-                <div className="flex h-[36px] w-[60px] items-center justify-center rounded-[18px] bg-white py-[6px] shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)]">
+                <div
+                  className={cn(
+                    'relative flex h-[36px] w-[60px] items-center justify-center rounded-[18px] bg-white py-[6px] shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)]',
+                    isRecording && [
+                      'bg-rose-200/10',
+                      'before:absolute before:inset-0 before:z-10 before:rounded-[18px] before:border-rose-100/50 before:shadow-[inset_0_1px_4px_rgba(0,0,0,0.02)]',
+                    ]
+                  )}
+                >
                   {isRecording ? (
-                    <AudioVisualizer audioStream={audioStream} />
+                    <>
+                      <Skeleton className="absolute inset-0 z-0 rounded-[18px] bg-rose-200/20" />
+                      <div className="relative z-20">
+                        <AudioVisualizer audioStream={audioStream} />
+                      </div>
+                    </>
                   ) : (
                     <motion.button
                       className="flex cursor-pointer items-center gap-1.5"
@@ -527,16 +562,7 @@ export default function SpeechToText() {
                         <>
                           <IconPlayerStopFilled className="h-3.5 w-3.5 text-rose-500" />
                           <span className="font-medium text-[13px] text-rose-500 tabular-nums">
-                            <CountUp
-                              start={remainingTime}
-                              end={0}
-                              duration={remainingTime}
-                              preserveValue
-                              decimals={0}
-                              useEasing={false}
-                              suffix="s"
-                              formattingFn={(n: number) => formatTime(n)}
-                            />
+                            <ReactCountDownWrapper value={remainingTime} />
                           </span>
                         </>
                       ) : (
