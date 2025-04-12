@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { env } from '@/env';
+import { type NextRequest, NextResponse } from 'next/server';
 import { transcribe } from 'orate';
 import { OpenAI } from 'orate/openai';
 
-export async function GET(request: NextRequest) {
+export function GET(_request: NextRequest) {
   return NextResponse.json({ message: 'Hello, world!' });
 }
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -18,8 +18,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(env.OPENAI_API_KEY);
-
     const openai = new OpenAI();
 
     const transcription = await transcribe({
@@ -27,14 +25,11 @@ export async function POST(request: NextRequest) {
       audio: audioFile,
     });
 
-    console.log(transcription);
-
     return NextResponse.json({ text: transcription });
-  } catch (error) {
-    console.error('Transcription error:', error);
+  } catch (_error) {
     return NextResponse.json(
       { error: 'Failed to transcribe audio' },
       { status: 500 }
     );
   }
-} 
+}

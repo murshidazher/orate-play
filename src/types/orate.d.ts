@@ -19,4 +19,4 @@ declare module 'orate/openai' {
       stream: (audio: File) => Promise<ReadableStream>;
     };
   }
-} 
+}

@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import { Spinner } from '@/components/ui/kibo-ui/spinner';
 import { IconMicrophone } from '@tabler/icons-react';
+import { useCallback, useState } from 'react';
 
 export default function SpeechToText() {
   const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcribedText, setTranscribedText] = useState('');
   const [error, setError] = useState('');
 
@@ -13,10 +15,12 @@ export default function SpeechToText() {
       try {
         setIsRecording(true);
         setError('');
-        
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
         const mediaRecorder = new MediaRecorder(stream, {
-          mimeType: 'audio/webm'
+          mimeType: 'audio/webm',
         });
         const audioChunks: Blob[] = [];
 
@@ -26,9 +30,12 @@ export default function SpeechToText() {
 
         mediaRecorder.onstop = async () => {
           const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-          const audioFile = new File([audioBlob], 'recording.webm', { type: 'audio/webm' });
+          const audioFile = new File([audioBlob], 'recording.webm', {
+            type: 'audio/webm',
+          });
 
           try {
+            setIsTranscribing(true);
             const formData = new FormData();
             formData.append('audio', audioFile);
 
@@ -44,22 +51,24 @@ export default function SpeechToText() {
             }
 
             setTranscribedText(data.text);
-          } catch (err) {
+          } catch (_err) {
             setError('Failed to transcribe audio. Please try again.');
-            console.error('Transcription error:', err);
+          } finally {
+            setIsTranscribing(false);
           }
         };
 
         mediaRecorder.start();
         setTimeout(() => {
           mediaRecorder.stop();
-          stream.getTracks().forEach(track => track.stop());
+          stream.getTracks().forEach((track) => track.stop());
           setIsRecording(false);
         }, 5000); // Record for 5 seconds
-      } catch (err) {
-        setError('Failed to access microphone. Please ensure you have granted microphone permissions.');
+      } catch (_err) {
+        setError(
+          'Failed to access microphone. Please ensure you have granted microphone permissions.'
+        );
         setIsRecording(false);
-        console.error('Microphone error:', err);
       }
     }
   }, [isRecording]);
@@ -68,28 +77,36 @@ export default function SpeechToText() {
     <div className="flex flex-col items-center gap-4 p-4">
       <button
         onClick={handleRecording}
-        disabled={isRecording}
-        className={`p-4 rounded-full ${
-          isRecording 
-            ? 'bg-red-500 animate-pulse' 
-            : 'bg-blue-500 hover:bg-blue-600'
+        disabled={isRecording || isTranscribing}
+        className={`rounded-full p-4 ${
+          isRecording
+            ? 'animate-pulse bg-red-500'
+            : isTranscribing
+              ? 'bg-gray-400'
+              : 'bg-blue-500 hover:bg-blue-600'
         } transition-colors duration-200`}
       >
-        <IconMicrophone 
-          size={24} 
-          className="text-white"
-        />
+        {isTranscribing ? (
+          <Spinner variant="circle" size={24} className="text-white" />
+        ) : (
+          <IconMicrophone size={24} className="text-white" />
+        )}
       </button>
-      
-      {error && (
-        <p className="text-red-500 text-sm">{error}</p>
+
+      {error && <p className="text-red-500 text-sm">{error}</p>}
+
+      {isTranscribing && (
+        <div className="flex items-center gap-2">
+          <Spinner variant="circle" size={20} />
+          <p className="text-gray-600">Transcribing audio...</p>
+        </div>
       )}
-      
-      {transcribedText && (
-        <div className="w-full max-w-md p-4 bg-gray-100 rounded-lg">
+
+      {transcribedText && !isTranscribing && (
+        <div className="w-full max-w-md rounded-lg bg-gray-100 p-4">
           <p className="text-gray-800">{transcribedText}</p>
         </div>
       )}
     </div>
   );
-} 
+}
