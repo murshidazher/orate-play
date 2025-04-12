@@ -11,12 +11,18 @@ dependencies:
   '@tabler/icons-react':
     specifier: ~3.31.0
     version: 3.31.0(react@19.1.0)
+  '@types/react-countup':
+    specifier: ~4.3.1
+    version: 4.3.1(react@19.1.0)
   class-variance-authority:
     specifier: ^0.7.1
     version: 0.7.1
   clsx:
     specifier: ^2.1.1
     version: 2.1.1
+  framer-motion:
+    specifier: ~12.6.5
+    version: 12.6.5(react-dom@19.1.0)(react@19.1.0)
   geist:
     specifier: ^1.3.1
     version: 1.3.1(next@15.3.0)
@@ -32,6 +38,9 @@ dependencies:
   react:
     specifier: ^19.0.0
     version: 19.1.0
+  react-countup:
+    specifier: ~6.5.3
+    version: 6.5.3(react@19.1.0)
   react-dom:
     specifier: ^19.0.0
     version: 19.1.0(react@19.1.0)
@@ -1291,6 +1300,15 @@ packages:
       '@types/node': 20.17.30
     dev: false
 
+  /@types/react-countup@4.3.1(react@19.1.0):
+    resolution: {integrity: sha512-8KwOdVVKhMOdtXJoOg3YXZwWxnFnZtPojNs/DZRlhHTpOYIb1If+9+rVPnwnXDhNhphj5diUCds9E26VtVK8IA==}
+    deprecated: This is a stub types definition. react-countup provides its own type definitions, so you do not need this installed.
+    dependencies:
+      react-countup: 6.5.3(react@19.1.0)
+    transitivePeerDependencies:
+      - react
+    dev: false
+
   /@types/react-dom@19.1.2(@types/react@19.1.1):
     resolution: {integrity: sha512-XGJkWF41Qq305SKWEILa1O8vzhb3aOo3ogBlSmiqNko/WmRb6QIaweuZCXjKygVDXpzXb5wyxKTSOsmkuqj+Qw==}
     peerDependencies:
@@ -1563,6 +1581,10 @@ packages:
     resolution: {integrity: sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA==}
     engines: {node: '>=18'}
     dev: true
+
+  /countup.js@2.8.0:
+    resolution: {integrity: sha512-f7xEhX0awl4NOElHulrl4XRfKoNH3rB+qfNSZZyjSZhaAoUk6elvhH+MNxMmlmuUJ2/QNTWPSA7U4mNtIAKljQ==}
+    dev: false
 
   /cross-fetch@3.2.0:
     resolution: {integrity: sha512-Q+xVJLoGOeIMXZmbUK4HYk+69cQH6LudR0Vu/pRm2YlU/hDV9CiS0gKUMaWY5f2NeUH9C1nV3bsTlCo0FsTV1Q==}
@@ -2929,6 +2951,15 @@ packages:
 
   /querystringify@2.2.0:
     resolution: {integrity: sha512-FIqgj2EUvTa7R50u0rGsyTftzjYmv/a3hO345bZNrqabNqjtgiDMgmo4mkUjd+nzU5oF3dClKqFIPUKybUyqoQ==}
+    dev: false
+
+  /react-countup@6.5.3(react@19.1.0):
+    resolution: {integrity: sha512-udnqVQitxC7QWADSPDOxVWULkLvKUWrDapn5i53HE4DPRVgs+Y5rr4bo25qEl8jSh+0l2cToJgGMx+clxPM3+w==}
+    peerDependencies:
+      react: '>= 16.3.0'
+    dependencies:
+      countup.js: 2.8.0
+      react: 19.1.0
     dev: false
 
   /react-dom@19.1.0(react@19.1.0):

@@ -1,6 +1,6 @@
 declare module 'orate' {
   export interface TranscribeOptions {
-    model: any;
+    model: 'whisper-1' | string;
     audio: File;
   }
 

@@ -24,8 +24,6 @@ export async function POST(request: NextRequest) {
       model: openai.stt('whisper-1'),
       audio: audioFile,
     });
-
-    console.log(transcription);
     return NextResponse.json({ text: transcription });
   } catch (_error) {
     return NextResponse.json(

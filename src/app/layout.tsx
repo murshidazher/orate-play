@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 
 export const metadata: Metadata = {
   title: 'Orate Playground',
-  description: 'Orate Playground',
+  description: 'Orate Playground | AI toolkit for speech.',
 };
 
 type RootLayoutProps = {
