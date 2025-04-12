@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
       audio: audioFile,
     });
 
+    console.log(transcription);
     return NextResponse.json({ text: transcription });
   } catch (_error) {
     return NextResponse.json(
