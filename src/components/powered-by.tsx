@@ -7,6 +7,13 @@ export const PoweredBy = () => (
       <div className="text-muted-foreground text-xs">Powered by</div>
       <Pill className="bg-primary text-primary-foreground hover:bg-primary">
         <PillAvatar
+          src="https://res.cloudinary.com/murshidazher/dpr_1.0,c_scale,f_webp,fl_awebp.progressive.progressive:semi,f_webp,fl_awebp,q_80/avatar.jpg"
+          fallback="MA"
+        />
+        <Link href="https://murshidazher.com/">@murshidazher</Link>
+      </Pill>
+      <Pill className="bg-primary text-primary-foreground hover:bg-primary">
+        <PillAvatar
           src="https://www.orate.dev/apple-icon.png?1744a036efa43016"
           fallback="OR"
         />
