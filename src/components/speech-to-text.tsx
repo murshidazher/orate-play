@@ -230,9 +230,9 @@ const ActionButton = ({
   const renderSpinner = () => (
     <motion.div
       key="spinner"
-      initial={{ opacity: 0, scale: 0.8 }}
+      initial={{ opacity: 0 }}
       animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.8 }}
+      exit={{ opacity: 0 }}
       transition={{
         type: 'spring',
         stiffness: 200,
@@ -254,9 +254,9 @@ const ActionButton = ({
   const renderSend = () => (
     <motion.div
       key="send"
-      initial={{ opacity: 0, scale: 0.8 }}
+      initial={{ opacity: 0 }}
       animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.8 }}
+      exit={{ opacity: 0 }}
       transition={{
         type: 'spring',
         stiffness: 200,
@@ -285,14 +285,14 @@ const ActionButton = ({
       className="cursor-pointer rounded-full border border-gray-200 bg-white p-2 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)] transition-colors hover:bg-gray-50"
       onClick={isRecording ? stopRecording : handleSend}
       disabled={isTranscribing || isCanceling}
-      initial={{ x: -20, y: 0, opacity: 0, scale: 0.8 }}
+      initial={{ x: -20, y: 0, opacity: 0 }}
       animate={{
         x: isCanceling ? -20 : 0,
         y: 0,
         opacity: isCanceling ? 0 : 1,
         scale: isCanceling ? 0.8 : 1,
       }}
-      exit={{ x: -20, y: 0, opacity: 0, scale: 0.8 }}
+      exit={{ x: -20, y: 0, opacity: 0 }}
       transition={{
         type: 'spring',
         stiffness: 200,
@@ -321,9 +321,9 @@ const TranscribedText = ({
   return (
     <motion.div
       className="-translate-x-1/2 absolute top-20 left-1/2 w-full max-w-md"
-      initial={{ opacity: 0, y: 40, scale: 0.8 }}
+      initial={{ opacity: 0, y: 40, scale: 1 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 20, scale: 0.9 }}
+      exit={{ opacity: 0, y: 20, scale: 1 }}
       transition={{
         type: 'spring',
         stiffness: 400,
@@ -455,39 +455,38 @@ const ExpandedControls = ({
   <motion.div
     key="expanded"
     className="absolute flex items-center gap-2 rounded-[22px] transition-all duration-300 ease-in-out"
-    initial={{ opacity: 0, scale: 0.8, x: -10 }}
+    initial={{ opacity: 0, scale: 0.9 }}
     animate={{
       opacity: isCanceling ? 0 : 1,
-      scale: isCanceling ? 0.8 : 1,
-      x: 0,
+      scale: isCanceling ? 0.9 : 1,
     }}
-    exit={{ opacity: 0, scale: 0.8, x: -10 }}
+    exit={{ opacity: 0, scale: 0.9 }}
     transition={{
       type: 'spring',
-      stiffness: 200,
-      damping: 20,
-      mass: 1.2,
-      duration: 0.3,
+      stiffness: 500,
+      damping: 30,
+      mass: 0.5,
+      duration: 0.2,
     }}
   >
     <motion.div className="flex items-center gap-2 p-[6px]">
       <motion.button
         className="cursor-pointer rounded-full border border-gray-200 bg-white p-2 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)] transition-colors hover:bg-gray-50"
         onClick={handleCancel}
-        initial={{ x: 20, y: 0, opacity: 0, scale: 0.8 }}
+        initial={{ x: 20, y: 0, opacity: 0 }}
         animate={{
           x: isCanceling ? 20 : 0,
           y: 0,
           opacity: isCanceling ? 0 : 1,
           scale: isCanceling ? 0.8 : 1,
         }}
-        exit={{ x: 20, y: 0, opacity: 0, scale: 0.8 }}
+        exit={{ x: 20, y: 0, opacity: 0 }}
         transition={{
           type: 'spring',
           stiffness: 200,
           damping: 20,
           mass: 1.2,
-          delay: 0.3,
+          delay: 0.4,
           duration: 0.6,
         }}
       >
@@ -496,6 +495,17 @@ const ExpandedControls = ({
 
       <div className="relative">
         <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.9 }}
+          transition={{
+            type: 'spring',
+            stiffness: 500,
+            damping: 30,
+            mass: 0.5,
+            delay: 0.1,
+            duration: 0.2,
+          }}
           className={cn(
             'relative flex h-[36px] w-[60px] items-center justify-center rounded-[18px] bg-white py-[6px] shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)]',
             !isRecording && !isCanceling && 'border border-gray-200',
@@ -543,20 +553,30 @@ const CollapsedButton = ({
   <motion.div
     key="collapsed"
     className="absolute flex items-center"
-    initial={{ opacity: 0, x: -10 }}
-    animate={{ opacity: 1, x: 0 }}
-    exit={{ opacity: 0, x: -10 }}
+    initial={{ opacity: 0, scale: 0.9 }}
+    animate={{ opacity: 1, scale: 1 }}
+    exit={{ opacity: 0, scale: 0.9 }}
     transition={{
       type: 'spring',
-      stiffness: 200,
-      damping: 20,
-      mass: 1.2,
-      duration: 0.8,
+      stiffness: 500,
+      damping: 30,
+      mass: 0.5,
+      duration: 0.2,
     }}
   >
     <motion.button
       className="flex size-9 cursor-pointer items-center justify-center rounded-full border border-gray-200 bg-white p-2 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)] transition-colors hover:bg-gray-50"
       onClick={startRecording}
+      initial={{ scale: 0.9 }}
+      animate={{ scale: 1 }}
+      exit={{ scale: 0.9 }}
+      transition={{
+        type: 'spring',
+        stiffness: 500,
+        damping: 30,
+        mass: 0.5,
+        duration: 0.2,
+      }}
     >
       <IconMicrophoneFilled size={18} className="text-gray-900" />
     </motion.button>
@@ -820,7 +840,7 @@ export default function SpeechToText() {
       setIsExpanded(false);
       setIsCanceling(false);
       setIsFullyCollapsed(true);
-    }, 250);
+    }, 200); // Reduced for faster transition
 
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl);
@@ -857,7 +877,7 @@ export default function SpeechToText() {
     <div className="relative flex min-h-[200px] flex-col items-center">
       <div className="-translate-x-1/2 absolute top-4 left-1/2">
         <div className="relative flex h-[36px] justify-center">
-          <AnimatePresence mode="popLayout" initial={false}>
+          <AnimatePresence mode="wait" initial={false}>
             {isExpanded || isCanceling ? (
               <ExpandedControls
                 isCanceling={isCanceling}
