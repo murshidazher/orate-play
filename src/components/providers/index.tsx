@@ -11,6 +11,6 @@ export const DesignSystemProvider = ({
 }: DesignSystemProviderProperties) => (
   <ThemeProvider {...properties}>
     <TooltipProvider>{children}</TooltipProvider>
-    <Toaster />
+    <Toaster position="top-right" />
   </ThemeProvider>
 );

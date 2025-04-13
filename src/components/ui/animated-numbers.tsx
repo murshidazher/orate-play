@@ -125,11 +125,20 @@ const BaseAnimatedNumber = ({
         const progress = Math.min(1, (now - startTime) / (duration * 1000));
 
         // Enhanced easing function for smoother animation with more pronounced ease on upward motion
-        const easedProgress = useEasing
-          ? progress < 0.7 
-            ? 0.8 * (1 - (1 - progress / 0.7) ** 4) // slower initial motion
-            : 0.8 + (progress - 0.7) * (0.2 / 0.3) + Math.sin(progress * Math.PI) * 0.15 // faster end with stronger spring
-          : progress;
+        let easedProgress = progress;
+
+        if (useEasing) {
+          if (progress < 0.7) {
+            // slower initial motion
+            easedProgress = 0.8 * (1 - (1 - progress / 0.7) ** 4);
+          } else {
+            // faster end with stronger spring
+            easedProgress =
+              0.8 +
+              (progress - 0.7) * (0.2 / 0.3) +
+              Math.sin(progress * Math.PI) * 0.15;
+          }
+        }
 
         const newValue =
           previousValue + (animateToNumber - previousValue) * easedProgress;

@@ -2,10 +2,6 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { transcribe } from 'orate';
 import { OpenAI } from 'orate/openai';
 
-export function GET(_request: NextRequest) {
-  return NextResponse.json({ message: 'Hello, world!' });
-}
-
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();

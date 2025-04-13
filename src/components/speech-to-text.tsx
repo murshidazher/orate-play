@@ -1,20 +1,33 @@
 'use client';
 
+import {
+  Cursor,
+  CursorBody,
+  CursorMessage,
+  CursorName,
+  CursorPointer,
+} from '@/components/ui/kibo-ui/cursor';
 import { Spinner } from '@/components/ui/kibo-ui/spinner';
 import { toast } from '@/components/ui/sonner';
 import { cn, formatTime } from '@/lib/utils';
 import {
   IconBrandTelegram,
   IconCheck,
+  IconCircleCheck,
+  IconCircleX,
   IconMicrophoneFilled,
   IconPlayerPlayFilled,
   IconPlayerStopFilled,
-  IconSquareRoundedCheck,
-  IconSquareRoundedX,
   IconX,
 } from '@tabler/icons-react';
-import { motion } from 'framer-motion';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
+import {
+  type ReactElement,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import ReactCountDownWrapper from './ui/react-count-down-wrapper';
 import { Skeleton } from './ui/skeleton';
 
@@ -165,34 +178,398 @@ const AudioVisualizer = ({ audioStream }: AudioVisualizerProps) => {
   return <canvas ref={canvasRef} width={80} height={24} className="px-2" />; // Adjusted canvas size
 };
 
-const _SimpleAudioVisualizer = () => {
+const PlaybackButton = ({
+  isPlaying,
+  audioDuration,
+  remainingTime,
+  togglePlayback,
+}: {
+  isPlaying: boolean;
+  audioDuration: number;
+  remainingTime: number;
+  togglePlayback: () => void;
+}) => (
+  <motion.button
+    className="flex cursor-pointer items-center gap-1.5"
+    onClick={togglePlayback}
+    disabled={!audioDuration}
+  >
+    {isPlaying ? (
+      <>
+        <IconPlayerStopFilled className="h-3.5 w-3.5 text-rose-500" />
+        <span className="font-medium text-[13px] text-rose-500 tabular-nums">
+          <ReactCountDownWrapper value={remainingTime} />
+        </span>
+      </>
+    ) : (
+      <>
+        <IconPlayerPlayFilled size={14} className="text-gray-700" />
+        <span className="font-medium text-[13px] text-gray-700 tabular-nums">
+          {formatTime(audioDuration)}
+        </span>
+      </>
+    )}
+  </motion.button>
+);
+
+type ActionButtonContent = ReactElement | null;
+
+const ActionButton = ({
+  isTranscribing,
+  isRecording,
+  isCanceling,
+  handleSend,
+  stopRecording,
+}: {
+  isTranscribing: boolean;
+  isRecording: boolean;
+  isCanceling: boolean;
+  handleSend: () => void;
+  stopRecording: () => void;
+}) => {
+  const renderSpinner = () => (
+    <motion.div
+      key="spinner"
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.8 }}
+      transition={{
+        type: 'spring',
+        stiffness: 200,
+        damping: 20,
+        mass: 1.2,
+        duration: 0.6,
+      }}
+    >
+      <Spinner variant="circle" size={16} className="text-gray-900" />
+    </motion.div>
+  );
+
+  const renderCheck = () => (
+    <motion.div key="check">
+      <IconCheck size={16} className="text-gray-900" />
+    </motion.div>
+  );
+
+  const renderSend = () => (
+    <motion.div
+      key="send"
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.8 }}
+      transition={{
+        type: 'spring',
+        stiffness: 200,
+        damping: 20,
+        mass: 1.2,
+        delay: 0.4,
+        duration: 0.6,
+      }}
+    >
+      <IconBrandTelegram size={16} className="text-gray-900" />
+    </motion.div>
+  );
+
+  let content: ActionButtonContent = null;
+
+  if (isTranscribing) {
+    content = renderSpinner();
+  } else if (isRecording || isCanceling) {
+    content = renderCheck();
+  } else if (!isCanceling) {
+    content = renderSend();
+  }
+
   return (
-    <div className="flex items-center justify-center gap-[2px] px-2">
-      {[1, 2, 3, 4].map((i) => (
-        <motion.div
-          key={i}
-          className="h-3 w-[1.5px] bg-rose-500"
-          initial={{ height: 6 }}
-          animate={{
-            height: [6, 12, 6],
-            transition: {
-              duration: 0.4,
-              repeat: Number.POSITIVE_INFINITY,
-              delay: i * 0.1,
-              ease: 'easeInOut',
-            },
-          }}
-        />
-      ))}
-    </div>
+    <motion.button
+      className="cursor-pointer rounded-full border border-gray-200 bg-white p-2 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)] transition-colors hover:bg-gray-50"
+      onClick={isRecording ? stopRecording : handleSend}
+      disabled={isTranscribing || isCanceling}
+      initial={{ x: -20, y: 0, opacity: 0, scale: 0.8 }}
+      animate={{
+        x: isCanceling ? -20 : 0,
+        y: 0,
+        opacity: isCanceling ? 0 : 1,
+        scale: isCanceling ? 0.8 : 1,
+      }}
+      exit={{ x: -20, y: 0, opacity: 0, scale: 0.8 }}
+      transition={{
+        type: 'spring',
+        stiffness: 200,
+        damping: 20,
+        mass: 1.2,
+        delay: 0.4,
+        duration: 0.6,
+      }}
+    >
+      <AnimatePresence mode="wait">{content}</AnimatePresence>
+    </motion.button>
   );
 };
+
+const TranscribedText = ({
+  transcribedText,
+  isTranscribing,
+}: {
+  transcribedText: string;
+  isTranscribing: boolean;
+}) => {
+  if (!transcribedText || isTranscribing) {
+    return null;
+  }
+
+  return (
+    <motion.div
+      className="-translate-x-1/2 absolute top-20 left-1/2 w-full max-w-md"
+      initial={{ opacity: 0, y: 40, scale: 0.8 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 20, scale: 0.9 }}
+      transition={{
+        type: 'spring',
+        stiffness: 400,
+        damping: 15,
+        mass: 0.8,
+        duration: 0.8,
+      }}
+    >
+      <Cursor>
+        <motion.div
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{
+            type: 'spring',
+            stiffness: 400,
+            damping: 15,
+            mass: 0.8,
+            delay: 0.1,
+          }}
+        >
+          <CursorPointer className="text-sky-500" />
+        </motion.div>
+        <motion.div
+          initial={{ scale: 0.5, opacity: 0, x: -20 }}
+          animate={{ scale: 1, opacity: 1, x: 0 }}
+          transition={{
+            type: 'spring',
+            stiffness: 400,
+            damping: 15,
+            mass: 0.8,
+            delay: 0.2,
+          }}
+        >
+          <CursorBody className="w-fit bg-sky-100 text-sky-700">
+            <CursorName>@OpenAI</CursorName>
+            <CursorMessage>{transcribedText}</CursorMessage>
+          </CursorBody>
+        </motion.div>
+      </Cursor>
+    </motion.div>
+  );
+};
+
+const RecordingVisualizer = ({
+  isRecording,
+  isCanceling,
+  audioStream,
+  audioDuration,
+  recordingProgress,
+}: {
+  isRecording: boolean;
+  isCanceling: boolean;
+  audioStream: MediaStream | null;
+  audioDuration: number;
+  recordingProgress: number;
+}) => {
+  if ((!isRecording && !isCanceling) || audioDuration) {
+    return null;
+  }
+
+  return (
+    <>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div
+          className="absolute h-[36px] w-[60px] rounded-[18px]"
+          style={{
+            background: 'transparent',
+          }}
+        >
+          <svg
+            className="absolute inset-0 h-full w-full"
+            aria-label="Recording progress indicator"
+            role="img"
+          >
+            <title>Recording progress indicator</title>
+            <path
+              d="M57.5 18 C57.5 26 52 33.5 42.5 33.5 H17.5 C8 33.5 2.5 26 2.5 18 C2.5 10 8 2.5 17.5 2.5 H42.5 C52 2.5 57.5 10 57.5 18"
+              fill="none"
+              stroke="#F43F5E"
+              strokeWidth="2.5"
+              strokeDasharray={`${(recordingProgress / 100) * 140} 140`}
+              strokeLinecap="round"
+              style={{
+                opacity: 1,
+                transformOrigin: 'center',
+                transform: 'rotate(0deg)',
+                strokeDashoffset: -7,
+              }}
+            />
+          </svg>
+        </div>
+      </div>
+      <Skeleton className="absolute inset-0 z-0 rounded-[18px] bg-rose-200/20" />
+      <div className="relative z-20">
+        <AudioVisualizer audioStream={audioStream} />
+      </div>
+    </>
+  );
+};
+
+// Split SpeechToText into smaller components to reduce cognitive complexity
+const ExpandedControls = ({
+  isCanceling,
+  isRecording,
+  isTranscribing,
+  audioStream,
+  isPlaying,
+  audioDuration,
+  remainingTime,
+  togglePlayback,
+  handleCancel,
+  handleSend,
+  stopRecording,
+  recordingProgress,
+}: {
+  isCanceling: boolean;
+  isRecording: boolean;
+  isTranscribing: boolean;
+  audioStream: MediaStream | null;
+  isPlaying: boolean;
+  audioDuration: number;
+  remainingTime: number;
+  togglePlayback: () => void;
+  handleCancel: () => void;
+  handleSend: () => void;
+  stopRecording: () => void;
+  recordingProgress: number;
+}) => (
+  <motion.div
+    key="expanded"
+    className="absolute flex items-center gap-2 rounded-[22px] transition-all duration-300 ease-in-out"
+    initial={{ opacity: 0, scale: 0.8, x: -10 }}
+    animate={{
+      opacity: isCanceling ? 0 : 1,
+      scale: isCanceling ? 0.8 : 1,
+      x: 0,
+    }}
+    exit={{ opacity: 0, scale: 0.8, x: -10 }}
+    transition={{
+      type: 'spring',
+      stiffness: 200,
+      damping: 20,
+      mass: 1.2,
+      duration: 0.3,
+    }}
+  >
+    <motion.div className="flex items-center gap-2 p-[6px]">
+      <motion.button
+        className="cursor-pointer rounded-full border border-gray-200 bg-white p-2 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)] transition-colors hover:bg-gray-50"
+        onClick={handleCancel}
+        initial={{ x: 20, y: 0, opacity: 0, scale: 0.8 }}
+        animate={{
+          x: isCanceling ? 20 : 0,
+          y: 0,
+          opacity: isCanceling ? 0 : 1,
+          scale: isCanceling ? 0.8 : 1,
+        }}
+        exit={{ x: 20, y: 0, opacity: 0, scale: 0.8 }}
+        transition={{
+          type: 'spring',
+          stiffness: 200,
+          damping: 20,
+          mass: 1.2,
+          delay: 0.3,
+          duration: 0.6,
+        }}
+      >
+        <IconX size={16} className="text-gray-600" />
+      </motion.button>
+
+      <div className="relative">
+        <motion.div
+          className={cn(
+            'relative flex h-[36px] w-[60px] items-center justify-center rounded-[18px] bg-white py-[6px] shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)]',
+            !isRecording && !isCanceling && 'border border-gray-200',
+            (isRecording || isCanceling) &&
+              !audioDuration && [
+                'bg-rose-200/10',
+                'before:absolute before:inset-0 before:z-10 before:rounded-[18px] before:border-rose-100/50 before:shadow-[inset_0_1px_4px_rgba(0,0,0,0.02)]',
+              ]
+          )}
+        >
+          <RecordingVisualizer
+            isRecording={isRecording}
+            isCanceling={isCanceling}
+            audioStream={audioStream}
+            audioDuration={audioDuration}
+            recordingProgress={recordingProgress}
+          />
+          {!isRecording && !isCanceling && (
+            <PlaybackButton
+              isPlaying={isPlaying}
+              audioDuration={audioDuration}
+              remainingTime={remainingTime}
+              togglePlayback={togglePlayback}
+            />
+          )}
+        </motion.div>
+      </div>
+
+      <ActionButton
+        isTranscribing={isTranscribing}
+        isRecording={isRecording}
+        isCanceling={isCanceling}
+        handleSend={handleSend}
+        stopRecording={stopRecording}
+      />
+    </motion.div>
+  </motion.div>
+);
+
+const CollapsedButton = ({
+  startRecording,
+}: {
+  startRecording: () => void;
+}) => (
+  <motion.div
+    key="collapsed"
+    className="absolute flex items-center"
+    initial={{ opacity: 0, x: -10 }}
+    animate={{ opacity: 1, x: 0 }}
+    exit={{ opacity: 0, x: -10 }}
+    transition={{
+      type: 'spring',
+      stiffness: 200,
+      damping: 20,
+      mass: 1.2,
+      duration: 0.8,
+    }}
+  >
+    <motion.button
+      className="flex size-9 cursor-pointer items-center justify-center rounded-full border border-gray-200 bg-white p-2 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)] transition-colors hover:bg-gray-50"
+      onClick={startRecording}
+    >
+      <IconMicrophoneFilled size={18} className="text-gray-900" />
+    </motion.button>
+  </motion.div>
+);
 
 export default function SpeechToText() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isCanceling, setIsCanceling] = useState(false);
+  const [_isFullyCollapsed, setIsFullyCollapsed] = useState(true);
   const [transcribedText, setTranscribedText] = useState('');
   const [error, setError] = useState('');
   const [_elapsedTime, setElapsedTime] = useState(0);
@@ -235,6 +612,7 @@ export default function SpeechToText() {
       setError('');
       setAudioDuration(0);
       audioChunksRef.current = [];
+      setIsFullyCollapsed(false);
 
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
@@ -242,7 +620,7 @@ export default function SpeechToText() {
 
       setAudioStream(stream);
       toast.success('Recording started', {
-        icon: <IconSquareRoundedCheck className="text-green-700" size={18} />,
+        icon: <IconCircleCheck className="text-green-700" size={18} />,
       });
 
       const recorder = new MediaRecorder(stream, {
@@ -328,7 +706,7 @@ export default function SpeechToText() {
       const errorMessage = 'Failed to access microphone';
       setError(errorMessage);
       toast.error(errorMessage, {
-        icon: <IconSquareRoundedX className="text-red-600" size={18} />,
+        icon: <IconCircleX className="text-red-600" size={18} />,
       });
     }
   }, [cleanup, audioUrl]);
@@ -343,7 +721,7 @@ export default function SpeechToText() {
       setAudioStream(null);
       setRecordingProgress(0);
       toast.success('Recording saved', {
-        icon: <IconSquareRoundedCheck className="text-emerald-700" size={18} />,
+        icon: <IconCircleCheck className="text-emerald-700" size={18} />,
       });
     }
   }, [isRecording]);
@@ -377,13 +755,13 @@ export default function SpeechToText() {
 
       setTranscribedText(data.text);
       toast.success('Transcription complete', {
-        icon: <IconSquareRoundedCheck className="text-emerald-700" size={18} />,
+        icon: <IconCircleCheck className="text-emerald-700" size={18} />,
       });
     } catch (_err) {
       const errorMessage = 'Failed to transcribe';
       setError(errorMessage);
       toast.error(errorMessage, {
-        icon: <IconSquareRoundedX className="text-red-700" size={18} />,
+        icon: <IconCircleX className="text-red-700" size={18} />,
       });
     } finally {
       setIsTranscribing(false);
@@ -428,29 +806,28 @@ export default function SpeechToText() {
 
   const handleCancel = () => {
     cleanup();
+    setIsCanceling(true);
+
     if (isRecording) {
       stopRecording();
       toast('Recording dismissed', {
-        icon: <IconSquareRoundedX className="text-gray-500" size={18} />,
+        icon: <IconCircleX className="text-gray-500" size={18} />,
       });
     }
-    setIsExpanded(false);
+
+    // Adjust timing for smoother transition
+    setTimeout(() => {
+      setIsExpanded(false);
+      setIsCanceling(false);
+      setIsFullyCollapsed(true);
+    }, 250);
+
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl);
       setAudioUrl(null);
     }
     setTranscribedText('');
     setError('');
-  };
-
-  const renderButtonIcon = () => {
-    if (isTranscribing) {
-      return <Spinner variant="circle" size={16} className="text-gray-900" />;
-    }
-    if (isRecording) {
-      return <IconCheck size={16} className="text-gray-900" />;
-    }
-    return <IconBrandTelegram size={16} className="text-gray-900" />;
   };
 
   // Add recording time limit logic
@@ -477,150 +854,54 @@ export default function SpeechToText() {
   }, [isRecording, stopRecording]);
 
   return (
-    <div className="flex flex-col items-center gap-4 p-4">
-      <div className="relative h-[36px]">
-        <motion.div
-          className={`flex items-center gap-2 rounded-[22px] transition-all duration-300 ease-in-out ${
-            isExpanded ? 'min-w-[240px]' : ''
-          }`}
-          initial={false}
-          animate={{
-            width: isExpanded ? 'auto' : 'auto',
-          }}
-        >
-          {isExpanded ? (
-            <motion.div
-              className="flex items-center gap-2 p-[6px]"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.2 }}
-            >
-              <motion.button
-                className="cursor-pointer rounded-full bg-white p-2 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)] transition-colors hover:bg-gray-50"
-                onClick={handleCancel}
-              >
-                <IconX size={16} className="text-gray-600" />
-              </motion.button>
-
-              <div className="relative">
-                {/* Border animation container */}
-                {isRecording && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div
-                      className="absolute h-[36px] w-[60px] rounded-[18px]"
-                      style={{
-                        background: 'transparent',
-                      }}
-                    >
-                      <svg
-                        className="absolute inset-0 h-full w-full"
-                        aria-label="Recording progress indicator"
-                        role="img"
-                      >
-                        <title>Recording progress indicator</title>
-                        <path
-                          d="M57.5 18 C57.5 26 52 33.5 42.5 33.5 H17.5 C8 33.5 2.5 26 2.5 18 C2.5 10 8 2.5 17.5 2.5 H42.5 C52 2.5 57.5 10 57.5 18"
-                          fill="none"
-                          stroke="#F43F5E"
-                          strokeWidth="2.5"
-                          strokeDasharray={`${(recordingProgress / 100) * 140} 140`}
-                          strokeLinecap="round"
-                          style={{
-                            opacity: 1,
-                            transformOrigin: 'center',
-                            transform: 'rotate(0deg)',
-                            strokeDashoffset: -7,
-                          }}
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                )}
-                <div
-                  className={cn(
-                    'relative flex h-[36px] w-[60px] items-center justify-center rounded-[18px] bg-white py-[6px] shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)]',
-                    isRecording && [
-                      'bg-rose-200/10',
-                      'before:absolute before:inset-0 before:z-10 before:rounded-[18px] before:border-rose-100/50 before:shadow-[inset_0_1px_4px_rgba(0,0,0,0.02)]',
-                    ]
-                  )}
-                >
-                  {isRecording ? (
-                    <>
-                      <Skeleton className="absolute inset-0 z-0 rounded-[18px] bg-rose-200/20" />
-                      <div className="relative z-20">
-                        <AudioVisualizer audioStream={audioStream} />
-                      </div>
-                    </>
-                  ) : (
-                    <motion.button
-                      className="flex cursor-pointer items-center gap-1.5"
-                      onClick={togglePlayback}
-                      disabled={!audioDuration}
-                    >
-                      {isPlaying ? (
-                        <>
-                          <IconPlayerStopFilled className="h-3.5 w-3.5 text-rose-500" />
-                          <span className="font-medium text-[13px] text-rose-500 tabular-nums">
-                            <ReactCountDownWrapper value={remainingTime} />
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <IconPlayerPlayFilled
-                            size={14}
-                            className="text-gray-700"
-                          />
-                          <span className="font-medium text-[13px] text-gray-700 tabular-nums">
-                            {formatTime(audioDuration)}
-                          </span>
-                        </>
-                      )}
-                    </motion.button>
-                  )}
-                </div>
-              </div>
-
-              <motion.button
-                className="cursor-pointer rounded-full bg-white p-2 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)] transition-colors hover:bg-gray-50"
-                onClick={isRecording ? stopRecording : handleSend}
-                disabled={isTranscribing}
-              >
-                {renderButtonIcon()}
-              </motion.button>
-            </motion.div>
-          ) : (
-            <motion.button
-              className="cursor-pointer rounded-full bg-white p-3 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)] transition-colors hover:bg-gray-50"
-              onClick={startRecording}
-            >
-              <IconMicrophoneFilled size={18} className="text-gray-900" />
-            </motion.button>
-          )}
-        </motion.div>
+    <div className="relative flex min-h-[200px] flex-col items-center">
+      <div className="-translate-x-1/2 absolute top-4 left-1/2">
+        <div className="relative flex h-[36px] justify-center">
+          <AnimatePresence mode="popLayout" initial={false}>
+            {isExpanded || isCanceling ? (
+              <ExpandedControls
+                isCanceling={isCanceling}
+                isRecording={isRecording}
+                isTranscribing={isTranscribing}
+                audioStream={audioStream}
+                isPlaying={isPlaying}
+                audioDuration={audioDuration}
+                remainingTime={remainingTime}
+                togglePlayback={togglePlayback}
+                handleCancel={handleCancel}
+                handleSend={handleSend}
+                stopRecording={stopRecording}
+                recordingProgress={recordingProgress}
+              />
+            ) : (
+              <CollapsedButton startRecording={startRecording} />
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       {error && (
         <motion.div
-          className="text-red-500 text-sm"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
+          className="-translate-x-1/2 absolute top-16 left-1/2 text-red-500 text-sm"
+          initial={{ opacity: 0, y: -10, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -10, scale: 0.9 }}
+          transition={{
+            type: 'spring',
+            stiffness: 200,
+            damping: 20,
+            mass: 1.2,
+            duration: 0.6,
+          }}
         >
           {error}
         </motion.div>
       )}
 
-      {transcribedText && !isTranscribing && (
-        <motion.div
-          className="w-full max-w-md rounded-lg bg-gray-100 p-4"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <p className="text-gray-800">{transcribedText}</p>
-        </motion.div>
-      )}
+      <TranscribedText
+        transcribedText={transcribedText}
+        isTranscribing={isTranscribing}
+      />
     </div>
   );
 }
